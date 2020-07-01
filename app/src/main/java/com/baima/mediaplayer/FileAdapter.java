@@ -6,22 +6,21 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.List;
 
 public class FileAdapter extends BaseAdapter {
 
     private Context context;
-    private List<String> pathList;
+    private List<String> nameList;
 
-    public FileAdapter(Context context, List<String> pathList) {
+    public FileAdapter(Context context, List<String> nameList) {
         this.context = context;
-        this.pathList = pathList;
+        this.nameList = nameList;
     }
 
     @Override
     public int getCount() {
-        return pathList.size();
+        return nameList.size();
     }
 
     @Override
@@ -47,9 +46,8 @@ public class FileAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        String path = pathList.get(position);
-        File file = new File(path);
-        holder.tv_name.setText(file.getName());
+        String name = nameList.get(position);
+        holder.tv_name.setText(name);
         return convertView;
     }
 

@@ -20,6 +20,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".SelectFileActivity"></activity>
+
+        <service android:name=".service.PlayService"
+            android:enabled="true"
+            android:exported="true"/>
+
     </application>
 
 </manifest>

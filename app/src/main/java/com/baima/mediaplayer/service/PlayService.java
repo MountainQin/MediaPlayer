@@ -34,7 +34,6 @@ public class PlayService extends Service {
     public void onCreate() {
         super.onCreate();
         playBinder = new PlayBinder();
-
     }
 
     @Override
@@ -61,26 +60,63 @@ public class PlayService extends Service {
             mediaPlayer = new MediaPlayer();
         }
 
-        public void play(String path) {
+        public void setOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
+            mediaPlayer.setOnCompletionListener(listener);
+        }
+
+        public void setOnPreparedListener(MediaPlayer.OnPreparedListener listener) {
+            mediaPlayer.setOnPreparedListener(listener);
+        }
+
+
+        public void play(final String path) {
             mediaPlayer.reset();
             try {
                 mediaPlayer.setDataSource(path);
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mediaPlayer.prepareAsync();
-                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        mediaPlayer.start();
-                    }
-                });
             } catch (IOException e) {
                 e.printStackTrace();
                 handler.sendEmptyMessage(PLAY_FILE_EXCEPTION);
             }
         }
 
+        //快退
+        public void rew() {
+            if (mediaPlayer != null) {
+                int currentPosition = mediaPlayer.getCurrentPosition();
+                currentPosition -= 5000;
+                if (currentPosition < 0) {
+                    currentPosition = 0;
+                }
+                mediaPlayer.seekTo(currentPosition);
+            }
+        }
+
+        //快进
+        public void ff() {
+            if (mediaPlayer != null) {
+                int currentPosition = mediaPlayer.getCurrentPosition();
+                currentPosition += 5000;
+                if (currentPosition > mediaPlayer.getDuration()) {
+                    currentPosition = mediaPlayer.getDuration();
+                }
+                mediaPlayer.seekTo(currentPosition);
+            }
+        }
+
+        public void start() {
+            mediaPlayer.start();
+            ;
+        }
+
+        public void pause() {
+            mediaPlayer.pause();
+        }
+
         public void release() {
             mediaPlayer.release();
         }
     }
+
 }

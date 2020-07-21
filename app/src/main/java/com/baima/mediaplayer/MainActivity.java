@@ -8,14 +8,17 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
+
+    private static final String TAG = "baima";
 
     private static final int SELECT_MUSIC = 1;
 
@@ -63,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ActivityCompat.requestPermissions(this, new String[]{readExternalStorage}, 1);
         } else {
             initViews();
+            startPlay();
         }
     }
 
@@ -204,6 +210,21 @@ playPrevious();
         tv_playing_name.setText("正在播放："+name);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case 1:
+                if (grantResults.length>0&&grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    initViews();
+                    startPlay();
+                }else{
+                    Toast.makeText(this, "拒绝权限将无法播放音乐！", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
+
     private void initViews() {
         tv_playing_name = findViewById(R.id.tv_playing_name);
         lv_music = findViewById(R.id.lv_music);
@@ -339,5 +360,17 @@ return;
                 return;
             }
         }
+    }
+
+    //如果从文件管理等过来就播放
+    private void startPlay(){
+        Intent intent = getIntent();
+        Uri data = intent.getData();
+        if (data!=null){
+            currentMusicPath=data.getPath();
+            addMusic(currentMusicPath);
+            refreshListData();
+            startBindPlayService();
+                    }
     }
 }

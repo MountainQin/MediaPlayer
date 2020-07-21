@@ -23,9 +23,19 @@
 android:id="@+id/tv_rew"
             android:text="快退"
             style="@style/TabTextViewStyle"/>
+                <TextView
+            android:id="@+id/tv_previous"
+                    android:text="上一首"
+            style="@style/TabTextViewStyle"/>
+
         <TextView
 android:id="@+id/tv_play"
             android:text="播放"
+            style="@style/TabTextViewStyle"/>
+
+        <TextView
+android:id="@+id/tv_next"
+            android:text="下一首"
             style="@style/TabTextViewStyle"/>
         <TextView
 android:id="@+id/tvff"

@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MusicAdapter adapter;
     private List<Music> musicList;
     private TextView tv_playing_name;
+    private TextView tv_previous;
+    private TextView tv_next;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +107,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case R.id.tv_rew:
                     playBinder.rew();
                     break;
-                case R.id.tv_play:
+                case R.id.tv_previous:
+playPrevious();
+                    break;
+                                    case R.id.tv_play:
                     String s = tv_play.getText().toString();
                     if ("播放".equals(s)) {
                         playBinder.start();
@@ -114,6 +119,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         playBinder.pause();
                         tv_play.setText("播放");
                     }
+                    break;
+                case R.id.tv_next:
+                    playNext();
                     break;
                 case R.id.tvff:
                     playBinder.ff();
@@ -200,9 +208,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_playing_name = findViewById(R.id.tv_playing_name);
         lv_music = findViewById(R.id.lv_music);
         tv_rew = findViewById(R.id.tv_rew);
+        tv_previous = findViewById(R.id.tv_previous);
+
         tv_play = findViewById(R.id.tv_play);
+
+        tv_next = findViewById(R.id.tv_next);
         tvff = findViewById(R.id.tvff);
-        defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        defaultSharedPreferences =getSharedPreferences("config", MODE_PRIVATE);
 
         musicList = new ArrayList<>();
         adapter = new MusicAdapter(this, musicList);
@@ -212,7 +224,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lv_music.setOnItemClickListener(this);
         lv_music.setOnItemLongClickListener(this);
         tv_rew.setOnClickListener(this);
+        tv_previous.setOnClickListener(this);
         tv_play.setOnClickListener(this);
+        tv_next.setOnClickListener(this);
         tvff.setOnClickListener(this);
 
     }
@@ -288,5 +302,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 })
                 .show();
+    }
+
+    //上一首
+    private void playPrevious(){
+        if (musicList.size()<1) {
+            //如果列表没有项目返回；
+return;
+        }
+            for (int i = 0; i < musicList.size(); i++) {
+                if (musicList.get(i).getPath().equals(currentMusicPath)){
+    i--;
+    if (i<0){
+        i=musicList.size()-1;
+    }
+    currentMusicPath=musicList.get(i).getPath();
+    playBinder.play(currentMusicPath);
+    return;
+                }
+            }
+    }
+    //下一首
+    private void playNext(){
+        if (musicList.size()<1) {
+            //如果列表没有项目返回；
+            return;
+        }
+        for (int i = 0; i < musicList.size(); i++) {
+            if (musicList.get(i).getPath().equals(currentMusicPath)){
+                i++;
+                if (i>=musicList.size()){
+                    i=0;
+                }
+                currentMusicPath=musicList.get(i).getPath();
+                playBinder.play(currentMusicPath);
+                return;
+            }
+        }
     }
 }

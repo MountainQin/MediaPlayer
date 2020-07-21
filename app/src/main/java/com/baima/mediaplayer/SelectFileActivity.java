@@ -43,7 +43,7 @@ public class SelectFileActivity extends AppCompatActivity implements AdapterView
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_file);
 
-        defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        defaultSharedPreferences=getSharedPreferences("config", MODE_PRIVATE);
         String defaultPath = defaultSharedPreferences.getString("default_path", ROOT);
 
         lv_file = findViewById(R.id.lv_file);

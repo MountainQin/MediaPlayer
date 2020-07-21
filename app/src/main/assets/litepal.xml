@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<litepad>
+    //数据库名称
+    <dbname value = "litepal"></dbname>
+    //数据库版本，每次数据库表及数据库字段发生改变的时候必须加1
+    <version value = '1'></version>
+    <list>
+        //数据表，有几张表就在list之间写几个mepping，标签中的实体类必须继承litePalSupport这个类
+        <mapping class="com.baima.mediaplayer.entities.Music" />
+    </list>
+</litepad>

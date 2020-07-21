@@ -17,12 +17,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baima.mediaplayer.entities.Music;
 import com.baima.mediaplayer.service.PlayService;
 
+import org.litepal.LitePal;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
@@ -36,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tv_play;
     private SharedPreferences defaultSharedPreferences;
     private String currentMusicPath;
+    private ListView lv_music;
+    private List<String> musicNameList;
+    private ArrayAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case SELECT_MUSIC:
                     File file = (File) data.getSerializableExtra(SelectFileActivity.EXTRA_SELECTED_FILE);
                     currentMusicPath = file.getAbsolutePath();
+                    addMusic(file.getAbsolutePath());
+                    refreshListData();
                     startBindPlayService();
                     break;
             }
@@ -156,10 +168,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initViews() {
+        lv_music = findViewById(R.id.lv_music);
         tv_rew = findViewById(R.id.tv_rew);
         tv_play = findViewById(R.id.tv_play);
         tvff = findViewById(R.id.tvff);
         defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        musicNameList = new ArrayList<>();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, musicNameList);
+        lv_music.setAdapter(adapter);
+        refreshListData();
 
         tv_rew.setOnClickListener(this);
         tv_play.setOnClickListener(this);
@@ -188,6 +206,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onServiceDisconnected(ComponentName name) {
 
+        }
+    }
+
+
+    //刷新列表数据
+    private void refreshListData() {
+        musicNameList.clear();
+        List<Music> musicList = LitePal.order("addDate desc").find(Music.class);
+        for (Music music : musicList) {
+            File file = new File(music.getPath());
+            String name = file.getName();
+            if (name.contains(".")) {
+                name = name.substring(0, name.lastIndexOf("."));
+        }
+            musicNameList.add(name);
+            }
+            adapter.notifyDataSetChanged();
+            lv_music.smoothScrollToPosition(0);
+    }
+
+    //添加音乐
+    private void addMusic(String path) {
+        List<Music> musicList = LitePal.where("path=?", path).find(Music.class);
+        if (musicList.size() > 0) {
+            //如果 存在就修改添加时间
+            for (Music music : musicList) {
+                music.setAddDate(System.currentTimeMillis());
+                music.update(music.getId());
+            }
+        } else {
+            //如果在数据 库中不存在就添加
+            Music music = new Music();
+            music.setPath(path);
+            music.setAddDate(System.currentTimeMillis());
+            music.save();
         }
     }
 }

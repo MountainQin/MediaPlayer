@@ -2,6 +2,7 @@ package com.baima.mediaplayer;
 
 import android.Manifest;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -13,11 +14,12 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +33,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
     private static final int SELECT_MUSIC = 1;
 
@@ -44,8 +46,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SharedPreferences defaultSharedPreferences;
     private String currentMusicPath;
     private ListView lv_music;
-    private List<String> musicNameList;
-    private ArrayAdapter<String> adapter;
+    private MusicAdapter adapter;
+    private List<Music> musicList;
+    private TextView tv_playing_name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +62,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             initViews();
         }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Music music = musicList.get(position);
+        currentMusicPath=music.getPath();
+        //如果 没链接服务就链接播放，如果 已经连接就直接播放
+        if (playBinder==null) {
+            startBindPlayService();
+        }else {
+            playBinder.play(music.getPath());
+        }
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        Music music = musicList.get(position);
+        showDeleteMusicDialog(music);
+        return true;
     }
 
     @Override
@@ -165,20 +187,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SharedPreferences.Editor edit = defaultSharedPreferences.edit();
         edit.putString("last_music_path", currentMusicPath);
         edit.apply();
+
+        //设置正在播放标签
+        String name = new File(currentMusicPath).getName();
+        if (name.contains(".")){
+            name=name.substring(0, name.lastIndexOf("."));
+        }
+        tv_playing_name.setText("正在播放："+name);
     }
 
     private void initViews() {
+        tv_playing_name = findViewById(R.id.tv_playing_name);
         lv_music = findViewById(R.id.lv_music);
         tv_rew = findViewById(R.id.tv_rew);
         tv_play = findViewById(R.id.tv_play);
         tvff = findViewById(R.id.tvff);
         defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        musicNameList = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, musicNameList);
+        musicList = new ArrayList<>();
+        adapter = new MusicAdapter(this, musicList);
         lv_music.setAdapter(adapter);
         refreshListData();
 
+        lv_music.setOnItemClickListener(this);
+        lv_music.setOnItemLongClickListener(this);
         tv_rew.setOnClickListener(this);
         tv_play.setOnClickListener(this);
         tvff.setOnClickListener(this);
@@ -212,18 +244,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //刷新列表数据
     private void refreshListData() {
-        musicNameList.clear();
-        List<Music> musicList = LitePal.order("addDate desc").find(Music.class);
-        for (Music music : musicList) {
-            File file = new File(music.getPath());
-            String name = file.getName();
-            if (name.contains(".")) {
-                name = name.substring(0, name.lastIndexOf("."));
-        }
-            musicNameList.add(name);
-            }
-            adapter.notifyDataSetChanged();
-            lv_music.smoothScrollToPosition(0);
+        musicList.clear();
+        List<Music> list = LitePal.order("addDate desc").find(Music.class);
+        musicList.addAll(list);
+        adapter.notifyDataSetChanged();
+        lv_music.smoothScrollToPosition(0);
     }
 
     //添加音乐
@@ -242,5 +267,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             music.setAddDate(System.currentTimeMillis());
             music.save();
         }
+    }
+
+    //显示删除音乐的对话框
+    private void showDeleteMusicDialog(final Music music){
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("提示")
+                .setMessage("你确定要删除吗？")
+                .setNegativeButton("取消",null)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        if (currentMusicPath.equals(music.getPath())){
+                            playBinder.stop();
+                        }
+                        music.delete();
+                        musicList.remove(music);
+                        adapter.notifyDataSetChanged();
+                    }
+                })
+                .show();
     }
 }

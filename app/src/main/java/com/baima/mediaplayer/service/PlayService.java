@@ -114,6 +114,10 @@ public class PlayService extends Service {
             mediaPlayer.pause();
         }
 
+        public void stop(){
+            mediaPlayer.stop();
+        }
+
         public void release() {
             mediaPlayer.release();
         }
